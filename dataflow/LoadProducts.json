@@ -1,0 +1,42 @@
+{
+	"name": "LoadProducts",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "products_ds",
+						"type": "DatasetReference"
+					},
+					"name": "ProductCSV"
+				},
+				{
+					"dataset": {
+						"referenceName": "Products_tab",
+						"type": "DatasetReference"
+					},
+					"name": "SelectProdIdentifier"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Products_tab",
+						"type": "DatasetReference"
+					},
+					"name": "LoadProductsTab"
+				}
+			],
+			"transformations": [
+				{
+					"name": "GetProdIdentifier"
+				},
+				{
+					"name": "AlterRow1"
+				}
+			],
+			"script": "source(output(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(10,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> ProductCSV\nsource(output(\n\t\tprod_identifier as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select prod_identifier from SalesLT.products',\n\tformat: 'query') ~> SelectProdIdentifier\nProductCSV, SelectProdIdentifier join(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> GetProdIdentifier\nGetProdIdentifier alterRow(upsertIf(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier)) ~> AlterRow1\nAlterRow1 sink(input(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(18,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['prod_identifier'],\n\tformat: 'table',\n\tmapColumn(\n\t\tprod_identifier = ProductCSV@prod_identifier,\n\t\tp_name,\n\t\tp_colour,\n\t\tp_price\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> LoadProductsTab"
+		}
+	}
+}

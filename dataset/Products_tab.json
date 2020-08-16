@@ -1,0 +1,36 @@
+{
+	"name": "Products_tab",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzSQLDBdevLab",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "prod_identifier",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "p_name",
+				"type": "varchar"
+			},
+			{
+				"name": "p_colour",
+				"type": "varchar"
+			},
+			{
+				"name": "p_price",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 0
+			}
+		],
+		"typeProperties": {
+			"schema": "SalesLT",
+			"table": "products"
+		}
+	}
+}
