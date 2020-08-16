@@ -1,0 +1,38 @@
+{
+	"name": "SalesTab",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzSQLDBdevLab",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "p_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "c_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "no_of_units",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "date_purchased",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "SalesLT",
+			"table": "sales"
+		}
+	}
+}
