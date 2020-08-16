@@ -1,0 +1,38 @@
+{
+	"name": "SalesIngestion",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzSQLDBdevLab",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "directory_name",
+				"type": "varchar"
+			},
+			{
+				"name": "file_name",
+				"type": "varchar"
+			},
+			{
+				"name": "file_type",
+				"type": "varchar"
+			},
+			{
+				"name": "full_load",
+				"type": "char"
+			},
+			{
+				"name": "last_updated_date",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "SalesLT",
+			"table": "SalesIngestion"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

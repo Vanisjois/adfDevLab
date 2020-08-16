@@ -1,0 +1,45 @@
+{
+	"name": "ds_csv_customers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_products",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "customers.csv",
+				"container": "products1"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "c_identifier",
+				"type": "String"
+			},
+			{
+				"name": "c_name",
+				"type": "String"
+			},
+			{
+				"name": "c_gender",
+				"type": "String"
+			},
+			{
+				"name": "c_phone_no",
+				"type": "String"
+			},
+			{
+				"name": "c_address",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,32 @@
+{
+	"name": "DuplicateAlphabets",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_alphabets",
+						"type": "DatasetReference"
+					},
+					"name": "alphabets"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_distinct",
+						"type": "DatasetReference"
+					},
+					"name": "Distincts"
+				}
+			],
+			"transformations": [
+				{
+					"name": "GetCount"
+				}
+			],
+			"script": "source(output(\n\t\tColumn_1 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> alphabets\nalphabets aggregate(groupBy(Column_1),\n\tCount = count(Column_1)) ~> GetCount\nGetCount sink(input(\n\t\tColumn_1 as string,\n\t\tColumn_2 as string,\n\t\tColumn_3 as string,\n\t\tColumn_4 as string,\n\t\tColumn_5 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tmapColumn(\n\t\tColumn_1\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Distincts"
+		}
+	}
+}

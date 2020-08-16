@@ -1,0 +1,53 @@
+{
+	"name": "CustomerStg",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzSQLDBdevLab",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "customer_identifier",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "first_name",
+				"type": "varchar"
+			},
+			{
+				"name": "last_name",
+				"type": "varchar"
+			},
+			{
+				"name": "gender",
+				"type": "char"
+			},
+			{
+				"name": "area_code",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "phone_no",
+				"type": "varchar"
+			},
+			{
+				"name": "address_line1",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "SalesLT",
+			"table": "customer_stg"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
