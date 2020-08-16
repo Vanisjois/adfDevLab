@@ -1,0 +1,182 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "DevLab"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/LoadProducts')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "products_ds",
+								"type": "DatasetReference"
+							},
+							"name": "ProductCSV"
+						},
+						{
+							"dataset": {
+								"referenceName": "Products_tab",
+								"type": "DatasetReference"
+							},
+							"name": "SelectProdIdentifier"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Products_tab",
+								"type": "DatasetReference"
+							},
+							"name": "LoadProductsTab"
+						}
+					],
+					"transformations": [
+						{
+							"name": "GetProdIdentifier"
+						},
+						{
+							"name": "AlterRow1"
+						}
+					],
+					"script": "source(output(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(10,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> ProductCSV\nsource(output(\n\t\tprod_identifier as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select prod_identifier from SalesLT.products',\n\tformat: 'query') ~> SelectProdIdentifier\nProductCSV, SelectProdIdentifier join(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> GetProdIdentifier\nGetProdIdentifier alterRow(upsertIf(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier)) ~> AlterRow1\nAlterRow1 sink(input(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(18,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['prod_identifier'],\n\tformat: 'table',\n\tpostSQLs:['commit'],\n\tmapColumn(\n\t\tprod_identifier = ProductCSV@prod_identifier,\n\t\tp_name,\n\t\tp_colour,\n\t\tp_price\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> LoadProductsTab"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/products_ds')]",
+				"[concat(variables('factoryId'), '/datasets/Products_tab')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/products_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage_products",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "products.csv",
+						"container": "products1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "prod_identifier",
+						"type": "String"
+					},
+					{
+						"name": "p_name",
+						"type": "String"
+					},
+					{
+						"name": "p_colour",
+						"type": "String"
+					},
+					{
+						"name": "p_price",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Products_tab')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzSQLDBdevLab",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "prod_identifier",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "p_name",
+						"type": "varchar"
+					},
+					{
+						"name": "p_colour",
+						"type": "varchar"
+					},
+					{
+						"name": "p_price",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "products"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ProductDF')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadProducts",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "LoadProducts",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							}
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/LoadProducts')]"
+			]
+		}
+	]
+}
