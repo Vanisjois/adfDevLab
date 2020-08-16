@@ -22,7 +22,7 @@
 				}
 			],
 			"transformations": [],
-			"script": "parameters{\n\tFilename as string ('sales_2019.csv')\n}\nsource(output(\n\t\ts_id as string,\n\t\tp_id as string,\n\t\tc_id as string,\n\t\tno_of_units as string,\n\t\tdate_purchased as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\twildcardPaths:[($Filename)]) ~> SalesFile\nSalesFile sink(input(\n\t\tp_id as integer,\n\t\tc_id as integer,\n\t\tno_of_units as integer,\n\t\tdate_purchased as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tp_id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SalesTable"
+			"script": "parameters{\n\tFilename as string ('sales_2019.csv')\n}\nsource(output(\n\t\tp_id as short,\n\t\tc_id as short,\n\t\tno_of_units as short,\n\t\tdate_purchased as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\twildcardPaths:[($Filename)]) ~> SalesFile\nSalesFile sink(input(\n\t\tp_id as integer,\n\t\tc_id as integer,\n\t\tno_of_units as integer,\n\t\tdate_purchased as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tp_id,\n\t\tc_id,\n\t\tno_of_units,\n\t\tdate_purchased\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SalesTable"
 		}
 	}
 }
