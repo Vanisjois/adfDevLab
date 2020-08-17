@@ -325,6 +325,173 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/LoadSales')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetSalesFiles",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Sales_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "Filter1",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "GetSalesFiles",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetSalesFiles').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@and(and(startswith(item().name,'sales'),endswith(item().name,'.csv')),equals(item().type,'File'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEachSalesFile",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Filter1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Filter1').output.Value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "InsertSales",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "InsertSales",
+											"type": "DataFlowReference",
+											"parameters": {
+												"Filename": {
+													"value": "'@{item().name}'",
+													"type": "Expression"
+												}
+											},
+											"datasetParameters": {
+												"SalesFile": {},
+												"MaxSalesId": {},
+												"SaveToSalesTable": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Sales_ds')]",
+				"[concat(variables('factoryId'), '/dataflows/InsertSales')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ProductDF')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadProducts",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "LoadProducts",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"ProductCSV": {},
+									"SelectProdIdentifier": {},
+									"LoadProductsTab": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							}
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/LoadProducts')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -559,6 +726,95 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Products_tab')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzSQLDBdevLab",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "prod_identifier",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "p_name",
+						"type": "varchar"
+					},
+					{
+						"name": "p_colour",
+						"type": "varchar"
+					},
+					{
+						"name": "p_price",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "products"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzSQLDBdevLab')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SalesFiles_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage_products",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "products1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "s_id",
+						"type": "String"
+					},
+					{
+						"name": "p_id",
+						"type": "String"
+					},
+					{
+						"name": "c_id",
+						"type": "String"
+					},
+					{
+						"name": "no_of_units",
+						"type": "String"
+					},
+					{
+						"name": "date_purchased",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/SalesIngestion')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -598,6 +854,102 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzSQLDBdevLab')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SalesTab')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzSQLDBdevLab",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "p_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "c_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "no_of_units",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "date_purchased",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "sales_id",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "sales"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzSQLDBdevLab')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Sales_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage_products",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "products1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "s_id",
+						"type": "String"
+					},
+					{
+						"name": "p_id",
+						"type": "String"
+					},
+					{
+						"name": "c_id",
+						"type": "String"
+					},
+					{
+						"name": "no_of_units",
+						"type": "String"
+					},
+					{
+						"name": "date_purchased",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
 			]
 		},
 		{
@@ -907,6 +1259,51 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/products_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage_products",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "products.csv",
+						"container": "products1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "prod_identifier",
+						"type": "String"
+					},
+					{
+						"name": "p_name",
+						"type": "String"
+					},
+					{
+						"name": "p_colour",
+						"type": "String"
+					},
+					{
+						"name": "p_price",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/AzSQLDBdevLab')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -990,7 +1387,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Load_Customer_Stage')]",
+			"name": "[concat(parameters('factoryName'), '/InsertSales')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -999,35 +1396,48 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "DS_Customer",
+								"referenceName": "SalesFiles_ds",
 								"type": "DatasetReference"
 							},
-							"name": "Customer"
+							"name": "SalesFile"
+						},
+						{
+							"dataset": {
+								"referenceName": "SalesTab",
+								"type": "DatasetReference"
+							},
+							"name": "MaxSalesId"
 						}
 					],
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "CustomerStg",
+								"referenceName": "SalesTab",
 								"type": "DatasetReference"
 							},
-							"name": "CustomerStg"
+							"name": "SaveToSalesTable"
 						}
 					],
 					"transformations": [
 						{
-							"name": "Id"
+							"name": "GetMaxSalesId"
 						},
 						{
-							"name": "CustomerName"
+							"name": "JoinWithMaxId"
+						},
+						{
+							"name": "SurrogateKey1"
+						},
+						{
+							"name": "DerivedColumn1"
 						}
 					],
-					"script": "source(output(\n\t\tc_identifier as short,\n\t\tc_name as string,\n\t\tc_gender as string,\n\t\tc_phone_no as string,\n\t\tc_address as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> Customer\nCustomer keyGenerate(output(Id as long),\n\tstartAt: 1L) ~> Id\nId derive(first_name = split(c_name,' ')[1],\n\t\tlast_name = split(c_name, ' ')[2],\n\t\tgender = case(c_gender=='Male','M','F'),\n\t\tarea_code = split(c_phone_no, '-')[1]) ~> CustomerName\nCustomerName sink(input(\n\t\tid as integer,\n\t\tcustomer_identifier as integer,\n\t\tfirst_name as string,\n\t\tlast_name as string,\n\t\tgender as string,\n\t\tarea_code as integer,\n\t\tphone_no as string,\n\t\taddress_line1 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: true,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tid = Id,\n\t\tcustomer_identifier = c_identifier,\n\t\tfirst_name,\n\t\tlast_name,\n\t\tgender,\n\t\tarea_code,\n\t\taddress_line1 = c_address,\n\t\tphone_no = c_phone_no\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CustomerStg"
+					"script": "parameters{\n\tFilename as string ('sales_2019.csv')\n}\nsource(output(\n\t\tp_id as short,\n\t\tc_id as short,\n\t\tno_of_units as short,\n\t\tdate_purchased as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\twildcardPaths:[($Filename)]) ~> SalesFile\nsource(output(\n\t\tmaxId as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select max(sales_id) as maxId from SalesLT.sales',\n\tformat: 'query') ~> MaxSalesId\nMaxSalesId derive(maxId = iif(isNull(maxId),0,maxId)) ~> GetMaxSalesId\nSalesFile, GetMaxSalesId join(true(),\n\tjoinType:'cross',\n\tbroadcast: 'auto')~> JoinWithMaxId\nJoinWithMaxId keyGenerate(output(surrogate_id as long),\n\tstartAt: 1L) ~> SurrogateKey1\nSurrogateKey1 derive(sales_id = maxId + surrogate_id) ~> DerivedColumn1\nDerivedColumn1 sink(input(\n\t\tp_id as integer,\n\t\tc_id as integer,\n\t\tno_of_units as integer,\n\t\tdate_purchased as timestamp,\n\t\tsales_id as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tp_id,\n\t\tc_id,\n\t\tno_of_units,\n\t\tdate_purchased,\n\t\tsales_id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SaveToSalesTable"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_Customer')]",
-				"[concat(variables('factoryId'), '/datasets/CustomerStg')]"
+				"[concat(variables('factoryId'), '/datasets/SalesFiles_ds')]",
+				"[concat(variables('factoryId'), '/datasets/SalesTab')]"
 			]
 		},
 		{
@@ -1070,7 +1480,7 @@
 							"name": "AlterRow1"
 						}
 					],
-					"script": "source(output(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(10,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> ProductCSV\nsource(output(\n\t\tprod_identifier as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select prod_identifier from SalesLT.products',\n\tformat: 'query') ~> SelectProdIdentifier\nProductCSV, SelectProdIdentifier join(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> GetProdIdentifier\nGetProdIdentifier alterRow(upsertIf(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier)) ~> AlterRow1\nAlterRow1 sink(input(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(18,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['prod_identifier'],\n\tformat: 'table',\n\tpostSQLs:['commit'],\n\tmapColumn(\n\t\tprod_identifier = ProductCSV@prod_identifier,\n\t\tp_name,\n\t\tp_colour,\n\t\tp_price\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> LoadProductsTab"
+					"script": "source(output(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(10,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> ProductCSV\nsource(output(\n\t\tprod_identifier as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select prod_identifier from [SalesLT].[products]',\n\tformat: 'query') ~> SelectProdIdentifier\nProductCSV, SelectProdIdentifier join(ProductCSV@prod_identifier == SelectProdIdentifier@prod_identifier,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> GetProdIdentifier\nGetProdIdentifier alterRow(upsertIf(ProductCSV@prod_identifier==SelectProdIdentifier@prod_identifier)) ~> AlterRow1\nAlterRow1 sink(input(\n\t\tprod_identifier as integer,\n\t\tp_name as string,\n\t\tp_colour as string,\n\t\tp_price as decimal(18,0)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['prod_identifier'],\n\tskipKeyWrites:true,\n\tformat: 'table',\n\tpostSQLs:['commit'],\n\tmapColumn(\n\t\tprod_identifier = ProductCSV@prod_identifier,\n\t\tp_name,\n\t\tp_colour,\n\t\tp_price\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> LoadProductsTab"
 				}
 			},
 			"dependsOn": [
@@ -1079,132 +1489,44 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/products_ds')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/Load_Customer_Stage')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureBlobStorage_products",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
+				"type": "MappingDataFlow",
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "products.csv",
-						"container": "products1"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "prod_identifier",
-						"type": "String"
-					},
-					{
-						"name": "p_name",
-						"type": "String"
-					},
-					{
-						"name": "p_colour",
-						"type": "String"
-					},
-					{
-						"name": "p_price",
-						"type": "String"
-					}
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Products_tab')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzSQLDBdevLab",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "prod_identifier",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "p_name",
-						"type": "varchar"
-					},
-					{
-						"name": "p_colour",
-						"type": "varchar"
-					},
-					{
-						"name": "p_price",
-						"type": "decimal",
-						"precision": 18,
-						"scale": 0
-					}
-				],
-				"typeProperties": {
-					"schema": "SalesLT",
-					"table": "products"
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_Customer",
+								"type": "DatasetReference"
+							},
+							"name": "Customer"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "CustomerStg",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerStg"
+						}
+					],
+					"transformations": [
+						{
+							"name": "Id"
+						},
+						{
+							"name": "CustomerName"
+						}
+					],
+					"script": "source(output(\n\t\tc_identifier as short,\n\t\tc_name as string,\n\t\tc_gender as string,\n\t\tc_phone_no as string,\n\t\tc_address as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> Customer\nCustomer keyGenerate(output(Id as long),\n\tstartAt: 1L) ~> Id\nId derive(first_name = split(c_name,' ')[1],\n\t\tlast_name = split(c_name, ' ')[2],\n\t\tgender = case(c_gender=='Male','M','F'),\n\t\tarea_code = split(c_phone_no, '-')[1]) ~> CustomerName\nCustomerName sink(input(\n\t\tid as integer,\n\t\tcustomer_identifier as integer,\n\t\tfirst_name as string,\n\t\tlast_name as string,\n\t\tgender as string,\n\t\tarea_code as integer,\n\t\tphone_no as string,\n\t\taddress_line1 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: true,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tid = Id,\n\t\tcustomer_identifier = c_identifier,\n\t\tfirst_name,\n\t\tlast_name,\n\t\tgender,\n\t\tarea_code,\n\t\taddress_line1 = c_address,\n\t\tphone_no = c_phone_no\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CustomerStg"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzSQLDBdevLab')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ProductDF')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "LoadProducts",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "LoadProducts",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"ProductCSV": {},
-									"SelectProdIdentifier": {},
-									"LoadProductsTab": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							}
-						}
-					}
-				],
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/LoadProducts')]"
+				"[concat(variables('factoryId'), '/datasets/DS_Customer')]",
+				"[concat(variables('factoryId'), '/datasets/CustomerStg')]"
 			]
 		}
 	]
