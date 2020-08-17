@@ -10,6 +10,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "Customer"
+				},
+				{
+					"dataset": {
+						"referenceName": "CustomerStg",
+						"type": "DatasetReference"
+					},
+					"name": "GetMaxId"
+				},
+				{
+					"dataset": {
+						"referenceName": "CustomerStg",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerStgTab"
 				}
 			],
 			"sinks": [
@@ -27,9 +41,24 @@
 				},
 				{
 					"name": "CustomerName"
+				},
+				{
+					"name": "MaxValue"
+				},
+				{
+					"name": "JoinWithIdStream"
+				},
+				{
+					"name": "JoinWithCustomerStgTab"
+				},
+				{
+					"name": "CheckCustomerIdentifie"
+				},
+				{
+					"name": "Merge"
 				}
 			],
-			"script": "source(output(\n\t\tc_identifier as short,\n\t\tc_name as string,\n\t\tc_gender as string,\n\t\tc_phone_no as string,\n\t\tc_address as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> Customer\nCustomer keyGenerate(output(Id as long),\n\tstartAt: 1L) ~> Id\nId derive(first_name = split(c_name,' ')[1],\n\t\tlast_name = split(c_name, ' ')[2],\n\t\tgender = case(c_gender=='Male','M','F'),\n\t\tarea_code = split(c_phone_no, '-')[1]) ~> CustomerName\nCustomerName sink(input(\n\t\tid as integer,\n\t\tcustomer_identifier as integer,\n\t\tfirst_name as string,\n\t\tlast_name as string,\n\t\tgender as string,\n\t\tarea_code as integer,\n\t\tphone_no as string,\n\t\taddress_line1 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: true,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tid = Id,\n\t\tcustomer_identifier = c_identifier,\n\t\tfirst_name,\n\t\tlast_name,\n\t\tgender,\n\t\tarea_code,\n\t\taddress_line1 = c_address,\n\t\tphone_no = c_phone_no\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CustomerStg"
+			"script": "source(output(\n\t\tc_identifier as short,\n\t\tc_name as string,\n\t\tc_gender as string,\n\t\tc_phone_no as string,\n\t\tc_address as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false) ~> Customer\nsource(output(\n\t\tmaxId as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select max(id) as maxId from SalesLT.customer_stg',\n\tformat: 'query') ~> GetMaxId\nsource(output(\n\t\tcustomer_identifier as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: 'select customer_identifier from SalesLT.customer_stg',\n\tformat: 'query') ~> CustomerStgTab\nCheckCustomerIdentifie@Insert keyGenerate(output(Id as long),\n\tstartAt: 1L) ~> Id\nId derive(first_name = split(c_name,' ')[1],\n\t\tlast_name = split(c_name, ' ')[2],\n\t\tgender = case(c_gender=='Male','M','F'),\n\t\tarea_code = split(c_phone_no, '-')[1]) ~> CustomerName\nGetMaxId derive(MaxId = iif(isNull(maxId),0,maxId)) ~> MaxValue\nJoinWithCustomerStgTab, MaxValue join(true(),\n\tjoinType:'cross',\n\tbroadcast: 'auto')~> JoinWithIdStream\nCustomer, CustomerStgTab join(c_identifier == customer_identifier,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> JoinWithCustomerStgTab\nJoinWithIdStream split(isNull(customer_identifier),\n\tnot(isNull(customer_identifier)),\n\tdisjoint: false) ~> CheckCustomerIdentifie@(Insert, Upsert)\nCheckCustomerIdentifie@Upsert alterRow() ~> Merge\nCustomerName sink(input(\n\t\tid as integer,\n\t\tcustomer_identifier as integer,\n\t\tfirst_name as string,\n\t\tlast_name as string,\n\t\tgender as string,\n\t\tarea_code as integer,\n\t\tphone_no as string,\n\t\taddress_line1 as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: true,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tmapColumn(\n\t\tid = Id,\n\t\tcustomer_identifier = c_identifier,\n\t\tfirst_name,\n\t\tlast_name,\n\t\tgender,\n\t\tarea_code,\n\t\taddress_line1 = c_address,\n\t\tphone_no = c_phone_no\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CustomerStg"
 		}
 	}
 }
