@@ -93,18 +93,6 @@
 									"type": "Int32",
 									"physicalType": "int"
 								}
-							},
-							{
-								"source": {
-									"name": "date_purchased",
-									"type": "DateTime",
-									"physicalType": "String"
-								},
-								"sink": {
-									"name": "date_purchased",
-									"type": "DateTime",
-									"physicalType": "datetime"
-								}
 							}
 						],
 						"typeConversion": true,
