@@ -1,0 +1,44 @@
+{
+	"name": "SourceDataset_4vu",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage_products",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "sales_2019.csv",
+				"container": "products1"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "s_id",
+				"type": "String"
+			},
+			{
+				"name": "p_id",
+				"type": "String"
+			},
+			{
+				"name": "c_id",
+				"type": "String"
+			},
+			{
+				"name": "no_of_units",
+				"type": "String"
+			},
+			{
+				"name": "date_purchased",
+				"type": "String"
+			}
+		]
+	}
+}
