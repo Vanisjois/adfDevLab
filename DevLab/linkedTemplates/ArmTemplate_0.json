@@ -14,6 +14,10 @@
 		"AzureBlobStorage_products_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage_products'"
+		},
+		"AKV_DevlabKeys_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://MyDevlabKeys.vault.azure.net/"
 		}
 	},
 	"variables": {
@@ -47,20 +51,14 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AzureIR')]",
-			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"name": "[concat(parameters('factoryName'), '/AKV_DevlabKeys')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"type": "Managed",
+				"annotations": [],
+				"type": "AzureKeyVault",
 				"typeProperties": {
-					"computeProperties": {
-						"location": "AutoResolve",
-						"dataFlowProperties": {
-							"computeType": "General",
-							"coreCount": 8,
-							"timeToLive": 0
-						}
-					}
+					"baseUrl": "[parameters('AKV_DevlabKeys_properties_typeProperties_baseUrl')]"
 				}
 			},
 			"dependsOn": []
@@ -164,6 +162,54 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDataset_4vu')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzSQLDBdevLab",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "p_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "c_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "no_of_units",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "date_purchased",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "sales_id",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "sales"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzSQLDBdevLab')]"
 			]
 		},
 		{
@@ -359,6 +405,55 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"container": "products1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "s_id",
+						"type": "String"
+					},
+					{
+						"name": "p_id",
+						"type": "String"
+					},
+					{
+						"name": "c_id",
+						"type": "String"
+					},
+					{
+						"name": "no_of_units",
+						"type": "String"
+					},
+					{
+						"name": "date_purchased",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDataset_4vu')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage_products",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "sales_2019.csv",
 						"container": "products1"
 					},
 					"columnDelimiter": ",",
@@ -742,167 +837,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_products')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Customers')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "get Sales format",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "SalesIngestion",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"firstRowOnly": false
-						}
-					}
-				],
-				"annotations": [],
-				"lastPublishTime": "2020-08-11T05:15:08Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/SalesIngestion')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Data Ingestion to Stg')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get Region Config",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": {
-									"value": "select directory_name, file_name, file_type, full_load from SalesLT.SalesIngestion where region_name = @{pipeline().parameters.Region}",
-									"type": "Expression"
-								},
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "CustomerStg",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "Get File Location",
-						"type": "GetMetadata",
-						"dependsOn": [
-							{
-								"activity": "dir_name",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ds_region_dir",
-								"type": "DatasetReference",
-								"parameters": {
-									"directory_name": {
-										"value": "@variables('dir_name')",
-										"type": "Expression"
-									}
-								}
-							},
-							"fieldList": [
-								"exists",
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true
-							},
-							"formatSettings": {
-								"type": "DelimitedTextReadSettings"
-							}
-						}
-					},
-					{
-						"name": "dir_name",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Get Region Config",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "dir_name",
-							"value": {
-								"value": "@activity('Get Region Config').output.value[1].directory_name",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"parameters": {
-					"Region": {
-						"type": "string"
-					}
-				},
-				"variables": {
-					"dir_name": {
-						"type": "String"
-					},
-					"region_name": {
-						"type": "String"
-					}
-				},
-				"annotations": [],
-				"lastPublishTime": "2020-08-12T09:52:03Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/CustomerStg')]",
-				"[concat(variables('factoryId'), '/datasets/ds_region_dir')]"
 			]
 		}
 	]

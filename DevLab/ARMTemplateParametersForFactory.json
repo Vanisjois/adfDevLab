@@ -10,6 +10,12 @@
 		},
 		"AzureBlobStorage_products_connectionString": {
 			"value": ""
+		},
+		"AKV_DevlabKeys_properties_typeProperties_baseUrl": {
+			"value": "https://MyDevlabKeys.vault.azure.net/"
+		},
+		"adlsWithKeyVault_properties_typeProperties_url": {
+			"value": "https://adlsgen2devlab.dfs.core.windows.net"
 		}
 	}
 }
