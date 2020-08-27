@@ -48,6 +48,13 @@
 						"path": "products1"
 					},
 					"enableSkipIncompatibleRow": true,
+					"logStorageSettings": {
+						"linkedServiceName": {
+							"referenceName": "AzureBlobStorage_products",
+							"type": "LinkedServiceReference"
+						},
+						"path": "products1"
+					},
 					"translator": {
 						"type": "TabularTranslator",
 						"mappings": [
