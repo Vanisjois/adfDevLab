@@ -1,0 +1,19 @@
+{
+	"name": "adlsWithKeyVault",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://adlsgen2devlab.dfs.core.windows.net",
+			"accountKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AKV_DevlabKeys",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "adls-key",
+				"secretVersion": "15554c3af942466996fda40e3e9fe677"
+			}
+		}
+	}
+}
