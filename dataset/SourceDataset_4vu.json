@@ -5,14 +5,6 @@
 			"referenceName": "AzureBlobStorage_products",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"File Name": {
-				"type": "string"
-			},
-			"Directory Name": {
-				"type": "string"
-			}
-		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
