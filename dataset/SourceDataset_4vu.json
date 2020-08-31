@@ -5,13 +5,27 @@
 			"referenceName": "AzureBlobStorage_products",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"File Name": {
+				"type": "string"
+			},
+			"Directory Name": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"folderPath": "sales_2019.csv",
-				"container": "products1"
+				"fileName": {
+					"value": "@dataset().File Name",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().Directory Name",
+					"type": "Expression"
+				}
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",

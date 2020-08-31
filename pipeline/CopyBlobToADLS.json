@@ -63,14 +63,24 @@
 						"mappings": [
 							{
 								"source": {
+									"name": "s_id",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "s_id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
 									"name": "p_id",
 									"type": "String",
 									"physicalType": "String"
 								},
 								"sink": {
 									"name": "p_id",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "String"
 								}
 							},
 							{
@@ -81,8 +91,7 @@
 								},
 								"sink": {
 									"name": "c_id",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "String"
 								}
 							},
 							{
@@ -93,8 +102,18 @@
 								},
 								"sink": {
 									"name": "no_of_units",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "date_purchased",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "date_purchased",
+									"type": "String"
 								}
 							}
 						],
