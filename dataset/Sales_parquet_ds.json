@@ -1,0 +1,19 @@
+{
+	"name": "Sales_parquet_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adlsWithKeyVault",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "my-company"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

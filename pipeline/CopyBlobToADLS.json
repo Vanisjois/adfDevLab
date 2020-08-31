@@ -1,9 +1,9 @@
 {
-	"name": "CopyBlobToSqlTable",
+	"name": "CopyBlobToADLS",
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_4vu",
+				"name": "Copy_Blob_To_ADLS",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -37,7 +37,10 @@
 						}
 					},
 					"sink": {
-						"type": "AzureSqlSink"
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
 					},
 					"enableStaging": true,
 					"stagingSettings": {
@@ -110,7 +113,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "DestinationDataset_4vu",
+						"referenceName": "Sales_parquet_ds",
 						"type": "DatasetReference"
 					}
 				]

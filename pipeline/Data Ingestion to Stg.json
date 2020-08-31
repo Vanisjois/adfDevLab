@@ -93,6 +93,26 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "Execute Copy Data",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Get File Location",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "CopyBlobToADLS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": false
+				}
 			}
 		],
 		"parameters": {
