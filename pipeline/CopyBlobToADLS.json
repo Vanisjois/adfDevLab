@@ -29,7 +29,10 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
-							"wildcardFileName": "*"
+							"wildcardFolderPath": {
+								"value": "@pipeline().parameters.Directory Name",
+								"type": "Expression"
+							}
 						},
 						"formatSettings": {
 							"type": "DelimitedTextReadSettings",
@@ -138,6 +141,14 @@
 				]
 			}
 		],
+		"parameters": {
+			"Directory Name": {
+				"type": "string"
+			},
+			"Files": {
+				"type": "array"
+			}
+		},
 		"annotations": []
 	}
 }
