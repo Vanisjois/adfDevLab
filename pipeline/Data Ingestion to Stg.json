@@ -85,6 +85,29 @@
 									"type": "DelimitedTextReadSettings"
 								}
 							}
+						},
+						{
+							"name": "Filter Files",
+							"type": "Filter",
+							"dependsOn": [
+								{
+									"activity": "Get File Location",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('Get File Location').output.childItems",
+									"type": "Expression"
+								},
+								"condition": {
+									"value": "@startswith(item(),item().file_name)",
+									"type": "Expression"
+								}
+							}
 						}
 					]
 				}
