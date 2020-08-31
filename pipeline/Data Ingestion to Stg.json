@@ -146,6 +146,26 @@
 									"type": "Expression"
 								}
 							}
+						},
+						{
+							"name": "Execute Copy from Blob to ADLS",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Filter Files",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "CopyBlobToADLS",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
 						}
 					]
 				}
