@@ -45,13 +45,13 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Get Region Config').output",
+						"value": "@activity('Get Region Config').output.value",
 						"type": "Expression"
 					},
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "Get File Location_copy1",
+							"name": "Get File Location",
 							"type": "GetMetadata",
 							"dependsOn": [],
 							"policy": {
@@ -68,7 +68,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"directory_name": {
-											"value": "@variables('dir_name')",
+											"value": "@item().directory_name",
 											"type": "Expression"
 										}
 									}
